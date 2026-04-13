@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Messaging Panel</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      display: flex;
+      height: 100vh;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 30%;
+      background: #111b21;
+      color: white;
+      padding: 10px;
+    }
+
+    .client {
+      padding: 10px;
+      border-bottom: 1px solid #2a3942;
+    }
+
+    /* CHAT AREA */
+    .chat {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-header {
+      background: #202c33;
+      color: white;
+      padding: 15px;
+    }
+
+    .chat-body {
+      flex: 1;
+      padding: 20px;
+      background: #efeae2;
+      overflow-y: auto;
+    }
+
+    /* MESSAGE */
+    .message {
+      background: #d9fdd3;
+      padding: 10px 15px 25px 15px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      max-width: 60%;
+      position: relative;
+      font-size: 14px;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    }
+
+    /* TIME */
+    .time {
+      position: absolute;
+      bottom: 5px;
+      right: 35px;
+      font-size: 11px;
+      color: gray;
+    }
+
+    /* TICK */
+    .tick {
+      position: absolute;
+      bottom: 5px;
+      right: 10px;
+      font-size: 12px;
+      color: gray;
+    }
+
+    /* FOOTER */
+    .chat-footer {
+      padding: 15px;
+      background: #202c33;
+      text-align: center;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #00a884;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+
+<body>
+
+
+  <!-- CHAT -->
+  <div class="chat">
+    <div class="chat-header">Messaging Panel</div>
+
+    <div class="chat-body" id="chatBox"></div>
+
+    <div class="chat-footer">
+      <button onclick="sendMessages()">Send Messages</button>
+    </div>
+  </div>
+
+<script>
+async function loadClients() {
+  const res = await fetch("http://127.0.0.1:5000/clients");
+  const clients = await res.json();
+
+  const clientList = document.getElementById("clientList");
+
+  clients.forEach(client => {
+    const div = document.createElement("div");
+    div.className = "client";
+    div.innerText = client.phone;
+
+    clientList.appendChild(div);
+  });
+}
+
+// run on page load
+loadClients();
+
+async function sendMessages() {
+  const chatBox = document.getElementById("chatBox");
+
+  const res = await fetch("http://127.0.0.1:5000/clients");
+  const clients = await res.json();
+
+  for (let client of clients) {
+
+    const response = await fetch("http://127.0.0.1:5000/send", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(client)
+    });
+
+    const data = await response.json();
+
+    const msgDiv = document.createElement("div");
+    msgDiv.className = "message";
+
+    const time = new Date().toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    msgDiv.innerHTML = `
+  <b>${client.phone}</b><br><br>
+  ${data.message.replace(/\n/g, "<br>")}
+  <span class="time">${time}</span>
+  <span class="tick">✔</span>
+`;
+
+    chatBox.appendChild(msgDiv);
+
+    const tick = msgDiv.querySelector(".tick");
+
+    setTimeout(() => {
+      tick.innerText = "✔✔";
+    }, 1000);
+
+    setTimeout(() => {
+      tick.innerText = "✔✔";
+      tick.style.color = "#34b7f1";
+    }, 2000);
+  }
+}
+</script>
+
+</body>
+</html>
